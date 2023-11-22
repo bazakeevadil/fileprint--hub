@@ -3,8 +3,15 @@ using WebApi.Models;
 
 namespace WebApi.Services;
 
+/// <summary>
+/// Provides methods for managing printers.
+/// </summary>
 public class PrinterManager
 {
+    /// <summary>
+    /// Retrieves a list of installed and available printers along with their statuses.
+    /// </summary>
+    /// <returns>A list of printers containing their names and statuses.</returns>
     public List<Printer> GetPrinters()
     {
         List<Printer> printers = new List<Printer>();
