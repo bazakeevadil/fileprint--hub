@@ -1,0 +1,57 @@
+version: '3.4'
+
+services:
+
+  webapi:
+    env_file: ".env"
+    container_name: "webapi"
+    image: adilka/fileprint-hub
+    volumes:
+        - "aspnet_keys_volume:/root/.aspnet/DataProtection-Keys"
+    ports:
+      - "7000:80"
+    networks:
+      - "fileprint-hub"
+    restart: unless-stopped
+
+  seq:
+    container_name: "seq"
+    image: "datalust/seq"
+    ports:
+      - "5421:80"
+    environment:
+      ACCEPT_EULA: "Y"
+    networks:
+      - "fileprint-hub"
+    volumes:
+      - seq_volume:/data
+    mem_limit: "4294967296"
+    memswap_limit: "4294967296"
+    restart: unless-stopped
+
+  ngrok:
+    container_name: "ngrok"
+    hostname: "ngrok"
+    image: ngrok/ngrok:latest
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+    volumes:
+      - ./ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4050:4050
+    networks:
+      - "fileprint-hub"
+    restart: unless-stopped
+
+volumes:
+  aspnet_keys_volume:
+    name: "aspnet_keys_volume"
+  seq_volume:
+    name: "seq_volume"
+
+networks:
+  fileprint-hub:
+    name: "fileprint-hub"

@@ -1,0 +1,8 @@
+authtoken: 2Wt0fdJeys1o7i9igyFar6o5YmM_4Gz7fvGFSUA8qNrmzx4t8
+version: 2
+tunnels:
+  webapi:
+    proto: http
+    domain: deciding-bluebird-pleasantly.ngrok-free.app
+    host_header: rewrite
+    addr: webapi
