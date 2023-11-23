@@ -1,28 +1,47 @@
-﻿namespace WebApi.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using WebApi.Models;
+
+namespace WebApi.Services;
 
 /// <summary>
 /// Provides methods for managing files and directories.
 /// </summary>
 public class FileManager
 {
-    /// <summary>
-    /// Checks for the presence of a flash drive.
-    /// </summary>
-    /// <returns>True if at least one removable drive is found; otherwise, False.</returns>
-    public bool CheckFlashDrive()
+
+    public DriveInfo GetRemovableDrive()
     {
-        DriveInfo[] drives = DriveInfo.GetDrives();
-        return drives.Any(drive => drive.DriveType == DriveType.Removable);
+        var drives = DriveInfo.GetDrives();
+
+        if (Enum.IsDefined(typeof(DriveType), DriveType.Removable))
+        {
+            return drives.FirstOrDefault(d => d.DriveType == DriveType.Removable);
+        }
+
+        throw new ArgumentException("Invalid drive type");
     }
+
 
     /// <summary>
     /// Returns a list of files in the specified directory.
     /// </summary>
     /// <param name="path">The path to the directory.</param>
     /// <returns>An array of strings representing the paths to all the files in the directory.</returns>
-    public string[] GetFilesInDirectory(string path)
+    public List<FileInfoModel> GetFilesInDirectory(string path)
     {
-        return Directory.GetFiles(path);
+
+        return Directory
+          .GetFiles(path)
+          .Select(f => new FileInfo(f))
+          .Select(f => new FileInfoModel
+          {
+              Name = f.Name,
+              Path = f.FullName,
+              Size = f.Length
+          })
+          .ToList();
+
     }
 
     /// <summary>
@@ -30,12 +49,21 @@ public class FileManager
     /// </summary>
     /// <param name="path">The path to the directory.</param>
     /// <returns>An array of strings representing the paths to all the files in the directory, filtered by file extensions.</returns>
-    public string[] GetFilteredFiles(string path)
+    public List<FileInfoModel> GetFilteredFiles(string path)
     {
-        string[] allowedExtensions = new string[] { ".doc", ".docx", ".xls", ".xlsx", ".pdf", ".jpg", ".png" };
-        return Directory.GetFiles(path)
-                        .Where(file => allowedExtensions.Contains(Path.GetExtension(file)))
-                        .ToArray();
+        string[] allowedExtensions = { ".doc", ".docx", ".xls", ".xlsx", ".pdf", ".jpg", ".png" };
+
+        return Directory
+          .GetFiles(path)
+          .Select(f => new FileInfo(f))
+          .Where(f => allowedExtensions.Contains(f.Extension))
+          .Select(f => new FileInfoModel
+          {
+              Name = f.Name,
+              Path = f.FullName,
+              Size = f.Length
+          })
+          .ToList();
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Text.Json;
 using WebApi.Services;
 
 namespace WebApi.Controllers;
@@ -24,11 +25,19 @@ public class FilesController : ControllerBase
     /// <returns>True if a flash drive is detected; otherwise, False.</returns>
     [HttpGet("flash-drive")]
     [SwaggerOperation(Summary = "Check for the presence of a flash drive")]
-    [ProducesResponseType(200, Type = typeof(bool))]
     public IActionResult CheckFlashDrive()
     {
-        bool hasFlashDrive = _fileManager.CheckFlashDrive();
-        return Ok(hasFlashDrive);
+
+        var fileManager = new FileManager();
+        var drive = fileManager.GetRemovableDrive();
+
+        if (drive != null)
+        {
+            return Ok(drive.Name);
+        }
+
+        return NotFound();
+
     }
 
     /// <summary>
@@ -40,9 +49,10 @@ public class FilesController : ControllerBase
     [HttpGet("files")]
     [SwaggerOperation(Summary = "Get files in a directory")]
     [ProducesResponseType(200, Type = typeof(string[]))]
-    public IActionResult GetFilesInDirectory([FromQuery] string path = "D:\\")
+    public IActionResult GetFiles(string path = "D:\\")
     {
-        string[] files = _fileManager.GetFilesInDirectory(path);
+        var files = _fileManager.GetFilesInDirectory(path);
+
         return Ok(files);
     }
 
@@ -57,7 +67,8 @@ public class FilesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(string[]))]
     public IActionResult GetFilteredFiles([FromQuery] string path = "D:\\")
     {
-        string[] filteredFiles = _fileManager.GetFilteredFiles(path);
+        var filteredFiles = _fileManager.GetFilteredFiles(path);
+
         return Ok(filteredFiles);
     }
 
