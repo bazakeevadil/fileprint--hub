@@ -7,4 +7,5 @@ public class FileInfoModel
     public string? Extension { get; set; }
     public long Size { get; set; }
     public string? Base64 { get; set; }
+    public bool IsDirectory { get; set; }
 }

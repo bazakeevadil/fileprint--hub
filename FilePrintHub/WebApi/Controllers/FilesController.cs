@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Text.Json;
 using WebApi.Services;
 
 namespace WebApi.Controllers;
@@ -19,12 +19,16 @@ public class FilesController : ControllerBase
     }
 
     /// <summary>
-    /// Checks for the presence of a flash drive.
+    /// Checks if a removable flash drive is connected.
     /// </summary>
-    /// <remarks>This endpoint checks for the presence of a flash drive.</remarks>
-    /// <returns>True if a flash drive is detected; otherwise, False.</returns>
+    /// <returns>
+    /// 200 OK with the drive name if a removable drive is found,
+    /// 404 Not Found if no removable drives are found.
+    /// </returns>
     [HttpGet("flash-drive")]
-    [SwaggerOperation(Summary = "Check for the presence of a flash drive")]
+    [ProducesResponseType(200, Type = typeof(string))]
+    [ProducesResponseType(404)]
+    [SwaggerOperation(Summary = "Checks if a removable flash drive is connected.")]
     public IActionResult CheckFlashDrive()
     {
 
@@ -51,9 +55,15 @@ public class FilesController : ControllerBase
     [ProducesResponseType(200, Type = typeof(string[]))]
     public IActionResult GetFiles(string path = "D:\\")
     {
-        var files = _fileManager.GetFilesInDirectory(path);
-
-        return Ok(files);
+        try
+        {
+            var files = _fileManager.GetFilesInDirectory(path);
+            return Ok(files);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     /// <summary>

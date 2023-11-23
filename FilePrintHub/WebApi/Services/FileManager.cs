@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
-using WebApi.Models;
+﻿using WebApi.Models;
 
 namespace WebApi.Services;
 
@@ -9,39 +7,75 @@ namespace WebApi.Services;
 /// </summary>
 public class FileManager
 {
-
+    /// <summary>
+    /// Gets the first removable drive in the system.
+    /// </summary>
+    /// <returns>A <see cref="DriveInfo"/> object representing the removable drive, or <c>null</c> if no removable drives are found.</returns>
     public DriveInfo GetRemovableDrive()
     {
+        // Get all available drives
         var drives = DriveInfo.GetDrives();
 
+        // Check if the DriveType enumeration contains Removable
         if (Enum.IsDefined(typeof(DriveType), DriveType.Removable))
         {
+            // Return the first removable drive, if any
             return drives.FirstOrDefault(d => d.DriveType == DriveType.Removable);
         }
 
+        // Throw an exception if DriveType.Removable is not defined
         throw new ArgumentException("Invalid drive type");
     }
 
 
     /// <summary>
-    /// Returns a list of files in the specified directory.
+    /// Gets a list of <see cref="FileInfoModel"/> objects representing files and directories in the specified path.
     /// </summary>
-    /// <param name="path">The path to the directory.</param>
-    /// <returns>An array of strings representing the paths to all the files in the directory.</returns>
+    /// <param name="path">The path of the directory to retrieve files and directories from.</param>
+    /// <returns>A list of <see cref="FileInfoModel"/> objects.</returns>
     public List<FileInfoModel> GetFilesInDirectory(string path)
     {
+        List<FileInfoModel> files = new List<FileInfoModel>();
 
-        return Directory
-          .GetFiles(path)
+        foreach (string dirPath in Directory.GetDirectories(path))
+        {
+            DirectoryInfo dir = new DirectoryInfo(dirPath);
+
+            files.Add(new FileInfoModel()
+            {
+                Name = dir.Name,
+                Path = dir.FullName,
+                IsDirectory = true
+            });
+
+            files.AddRange(GetFilesInSubDirectory(dirPath));
+        }
+
+        files.AddRange(Directory.GetFiles(path)
           .Select(f => new FileInfo(f))
           .Select(f => new FileInfoModel
           {
               Name = f.Name,
               Path = f.FullName,
-              Size = f.Length
-          })
-          .ToList();
+              Extension = f.Extension,
+              Size = f.Length,
+              IsDirectory = false
+          }));
 
+        return files;
+    }
+
+    /// <summary>
+    /// Recursively gets a list of <see cref="FileInfoModel"/> objects representing files and directories in the specified subpath.
+    /// </summary>
+    /// <param name="subpath">The subpath of the directory to retrieve files and directories from.</param>
+    /// <returns>A list of <see cref="FileInfoModel"/> objects.</returns>
+    private List<FileInfoModel> GetFilesInSubDirectory(string subpath)
+    {
+        return Directory
+          .GetDirectories(subpath)
+          .SelectMany(d => GetFilesInDirectory(d))
+          .ToList();
     }
 
     /// <summary>
@@ -61,6 +95,7 @@ public class FileManager
           {
               Name = f.Name,
               Path = f.FullName,
+              Extension = f.Extension,
               Size = f.Length
           })
           .ToList();
